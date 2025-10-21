@@ -1,0 +1,160 @@
+name: C++ CI with Releases
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.bump_version.outputs.new_tag }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags --force
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "last_tag=$last_tag" >> $GITHUB_ENV
+          echo "last_tag=$last_tag" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          IFS='.' read -r major minor patch <<< "${last_tag//v/}"
+          patch=$((patch + 1))
+          new_tag="v$major.$minor.$patch"
+          echo "new_tag=$new_tag" >> $GITHUB_ENV
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ env.new_tag }}
+          git push origin ${{ env.new_tag }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.new_tag }}
+          name: Release ${{ env.new_tag }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Clean build directory
+        run: rm -rf build || true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Configure with CMake
+        run: cmake -S . -B build -DVERSION_PROJECT="${{ needs.create-release.outputs.new_tag }}"
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run program
+        run: |
+          ./build/main
+          echo "Program executed successfully"
+
+      - name: Create Linux package
+        run: |
+          mkdir -p package
+          cp build/main package/
+          tar -czf sem3_lab3_c_linux_${{ needs.create-release.outputs.new_tag }}.tar.gz package/
+
+      - name: Upload Linux package to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.new_tag }}
+          files: sem3_lab3_c_linux_*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    needs: create-release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Clean build directory
+        run: Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run program
+        run: |
+          .\build\main.exe
+          echo "Program executed successfully"
+
+      - name: Create Windows package
+        run: |
+          New-Item -ItemType Directory -Path package -Force
+          Copy-Item build\main.exe package\
+          Compress-Archive -Path package\* -DestinationPath sem3_lab3_c_windows_${{ needs.create-release.outputs.new_tag }}.zip
+
+      - name: Upload Windows package to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.new_tag }}
+          files: sem3_lab3_c_windows_*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Clean build directory
+        run: rm -rf build || true
+
+      - name: Configure with CMake
+        run: cmake -S . -B build -DVERSION_PROJECT="${{ needs.create-release.outputs.new_tag }}"
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run program
+        run: |
+          ./build/main
+          echo "Program executed successfully"
+
+      - name: Create macOS package
+        run: |
+          mkdir -p package
+          cp build/main package/
+          tar -czf sem3_lab3_c_macos_${{ needs.create-release.outputs.new_tag }}.tar.gz package/
+
+      - name: Upload macOS package to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.new_tag }}
+          files: sem3_lab3_c_macos_*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
