@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = 
+CXX_INCLUDES = -I/Users/pasha/CLionProjects/sem3_lab3_c--/include
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64
 
