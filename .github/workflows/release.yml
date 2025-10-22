@@ -104,17 +104,17 @@ jobs:
         run: cmake -S . -B build
 
       - name: Build project
-        run: cmake --build build
+        run: cmake --build build --config Release  # ← ДОБАВЬ ЭТО
 
       - name: Run program
         run: |
-          .\build\main.exe
+          .\build\Release\main.exe
           echo "Program executed successfully"
 
       - name: Create Windows package
         run: |
           New-Item -ItemType Directory -Path package -Force
-          Copy-Item build\main.exe package\
+          Copy-Item build\Release\main.exe package\
           Compress-Archive -Path package\* -DestinationPath sem3_lab3_c_windows_${{ needs.create-release.outputs.new_tag }}.zip
 
       - name: Upload Windows package to release
