@@ -5,8 +5,11 @@ project(sem3_lab3_c--)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ЯВНО указываем где создавать исполняемый файл
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 #основная программа
-add_executable(sem3_lab3_c-- src/main.cpp)
+add_executable(main src/main.cpp)
 
 #include директории
-target_include_directories(sem3_lab3_c-- PRIVATE include)
+target_include_directories(main PRIVATE include)
