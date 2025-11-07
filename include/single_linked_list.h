@@ -24,7 +24,7 @@ private:
         if (index>=size_) throw std::out_of_range{"index out of range"};
         Node* current = head_.get();
         for (size_t i =0;i<index;i++){
-            current = current->next;
+            current = current->next.get();
         }
         return current;
     }

@@ -153,55 +153,65 @@ public:
         size_++;
     }
 
-    void insert(size_t index,const T& value){
-        if (index > size_){
+    void insert(size_t index, const T& value) {
+        if (index > size_) {
             throw std::out_of_range("index out of range");
         }
 
-        if (index == 0){
+        if (index == 0) {
             push_front(value);
             return;
         }
-        if(index == size_){
+        if (index == size_) {
             push_back(value);
             return;
         }
-        Node* current = get_node(index);
+
+        // НАЙДИ УЗЕЛ ПЕРЕД позицией вставки, а не саму позицию!
+        Node* prev_node = get_node(index - 1);  // ← ИЗМЕНЕНИЕ ЗДЕСЬ
         auto new_node = std::make_unique<Node>(value);
         Node* new_raw = new_node.get();
 
-        new_raw->prev = current->prev;
-        new_raw->next = std::move(current->prev->next);
+        // Вставляем между prev_node и prev_node->next
+        new_raw->prev = prev_node;
+        new_raw->next = std::move(prev_node->next);
 
-        current->prev = new_raw;
-        new_raw->prev->next = std::move(new_node);
+        // Обновляем указатели соседних узлов
+        if (new_raw->next) {
+            new_raw->next->prev = new_raw;
+        }
 
+        prev_node->next = std::move(new_node);
         size_++;
     }
 
-    void insert(size_t index,T&& value){
-        if (index > size_){
+    void insert(size_t index, T&& value) {
+        if (index > size_) {
             throw std::out_of_range("index out of range");
         }
 
-        if (index == 0){
+        if (index == 0) {
             push_front(std::move(value));
             return;
         }
-        if(index == size_){
+        if (index == size_) {
             push_back(std::move(value));
             return;
         }
-        Node* current = get_node(index);
+
+        // Тот же принцип - используй prev_node
+        Node* prev_node = get_node(index - 1);  // ← ИЗМЕНЕНИЕ ЗДЕСЬ
         auto new_node = std::make_unique<Node>(std::move(value));
         Node* new_raw = new_node.get();
 
-        new_raw->prev = current->prev;
-        new_raw->next = std::move(current->prev->next);
+        new_raw->prev = prev_node;
+        new_raw->next = std::move(prev_node->next);
 
-        current->prev = new_raw;
-        new_raw->prev->next = std::move(new_node);
+        if (new_raw->next) {
+            new_raw->next->prev = new_raw;
+        }
 
+        prev_node->next = std::move(new_node);
         size_++;
     }
 
@@ -224,10 +234,19 @@ public:
             tail_ = tail_->prev;
             tail_->next.reset();
         } else {
-            // Удаляем из середины
+            // Удаляем из середины - ИСПРАВЛЕННАЯ ЧАСТЬ
             Node* to_delete = get_node(index);
+
+            // Сохраняем указатель на следующий узел ДО перемещения
+            Node* next_node = to_delete->next.get();
+
+            // Перемещаем владение следующим узлом к предыдущему
             to_delete->prev->next = std::move(to_delete->next);
-            to_delete->next->prev = to_delete->prev;
+
+            // Обновляем prev у следующего узла
+            if (next_node) {
+                next_node->prev = to_delete->prev;
+            }
         }
         size_--;
     }

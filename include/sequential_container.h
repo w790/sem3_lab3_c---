@@ -3,6 +3,7 @@
 
 #include <cstddef> //для size_t
 #include <utility> // для std::move
+#include <memory>
 
 
 template<typename T> //T-шаблонный параметр

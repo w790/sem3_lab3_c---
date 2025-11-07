@@ -1,1 +1,1 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/main.dir/src/main.cpp.o -o main
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libffi/lib -L/opt/homebrew/opt/pango/lib -L/opt/homebrew/opt/cairo/lib -L/opt/homebrew/opt/gdk-pixbuf/lib -L/opt/homebrew/opt/glib/lib CMakeFiles/main.dir/src/main.cpp.o -o main
