@@ -19,8 +19,9 @@ void test_sequential_container() {
     //вывод
     std::cout << " 3. Содержимое контейнера " << std::endl;
     for (size_t i = 0; i < container1.size(); i++) {
-        std::cout << container1[i] << std::endl;
+        std::cout << container1[i] << ' ';
     }
+    std::cout << std::endl;
 
     //вывод размера
     std::cout<<" 4. Размер контейнера :"<< container1.size()<<std::endl;
@@ -35,8 +36,9 @@ void test_sequential_container() {
 
     std::cout << "6. Содержимое после удаления" << std::endl;
     for (size_t i = 0; i < container1.size(); i++) {
-        std::cout << container1[i] << std::endl;
+        std::cout << container1[i]<< ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 0, 1, 3, 5, 7, 8, 9
 
     // 7. Добавление элемента 10 в начало контейнера
@@ -46,8 +48,9 @@ void test_sequential_container() {
     // 8. Вывод содержимого контейнера на экран
     std::cout << "8. Содержимое после добавления в начало" << std::endl;
     for (size_t i = 0; i < container1.size(); i++) {
-        std::cout << container1[i] << std::endl;
+        std::cout << container1[i]<< ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 5, 7, 8, 9
 
     // 9. Добавление элемента 20 в середину контейнера
@@ -58,8 +61,9 @@ void test_sequential_container() {
     // 10. Вывод содержимого контейнера на экран
     std::cout << "10. Содержимое после добавления в середину" << std::endl;
     for (size_t i = 0; i < container1.size(); i++) {
-        std::cout << container1[i] << std::endl;
+        std::cout << container1[i]<< ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9
 
     // 11. Добавление элемента 30 в конец контейнера
@@ -69,8 +73,9 @@ void test_sequential_container() {
     // 12. Вывод содержимого контейнера на экран
     std::cout << "12. Финальное содержимое" << std::endl;
     for (size_t i = 0; i < container1.size(); i++) {
-        std::cout << container1[i] << std::endl;
+        std::cout << container1[i]<< ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9, 30
 
     std::cout << "Размер после выполненных операций: " << container1.size() << std::endl;
@@ -94,8 +99,9 @@ void double_linked_list_container() {
     //вывод
     std::cout << " 3. Содержимое контейнера " << std::endl;
     for (size_t i = 0; i < container2.size(); i++) {
-        std::cout << container2[i] << std::endl;
+        std::cout << container2[i] << ' ';
     }
+    std::cout << std::endl;
 
     //вывод размера
     std::cout<<" 4. Размер контейнера :"<< container2.size()<<std::endl;
@@ -110,8 +116,9 @@ void double_linked_list_container() {
 
     std::cout << "6. Содержимое после удаления" << std::endl;
     for (size_t i = 0; i < container2.size(); i++) {
-        std::cout << container2[i] << std::endl;
+        std::cout << container2[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 0, 1, 3, 5, 7, 8, 9
 
     // 7. Добавление элемента 10 в начало контейнера
@@ -121,8 +128,9 @@ void double_linked_list_container() {
     // 8. Вывод содержимого контейнера на экран
     std::cout << "8. Содержимое после добавления в начало" << std::endl;
     for (size_t i = 0; i < container2.size(); i++) {
-        std::cout << container2[i] << std::endl;
+        std::cout << container2[i] <<  ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 5, 7, 8, 9
 
     // 9. Добавление элемента 20 в середину контейнера
@@ -133,8 +141,9 @@ void double_linked_list_container() {
     // 10. Вывод содержимого контейнера на экран
     std::cout << "10. Содержимое после добавления в середину" << std::endl;
     for (size_t i = 0; i < container2.size(); i++) {
-        std::cout << container2[i] << std::endl;
+        std::cout << container2[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9
 
     // 11. Добавление элемента 30 в конец контейнера
@@ -144,8 +153,9 @@ void double_linked_list_container() {
     // 12. Вывод содержимого контейнера на экран
     std::cout << "12. Финальное содержимое" << std::endl;
     for (size_t i = 0; i < container2.size(); i++) {
-        std::cout << container2[i] << std::endl;
+        std::cout << container2[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9, 30
 
     std::cout << "Размер после выполненных операций: " << container2.size() << std::endl;
@@ -170,8 +180,9 @@ void single_linked_list_container() {
     //вывод
     std::cout << " 3. Содержимое контейнера " << std::endl;
     for (size_t i = 0; i < container3.size(); i++) {
-        std::cout << container3[i] << std::endl;
+        std::cout << container3[i] << ' ';
     }
+    std::cout << std::endl;
 
     //вывод размера
     std::cout<<" 4. Размер контейнера :"<< container3.size()<<std::endl;
@@ -186,8 +197,9 @@ void single_linked_list_container() {
 
     std::cout << "6. Содержимое после удаления" << std::endl;
     for (size_t i = 0; i < container3.size(); i++) {
-        std::cout << container3[i] << std::endl;
+        std::cout << container3[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 0, 1, 3, 5, 7, 8, 9
 
     // 7. Добавление элемента 10 в начало контейнера
@@ -197,8 +209,9 @@ void single_linked_list_container() {
     // 8. Вывод содержимого контейнера на экран
     std::cout << "8. Содержимое после добавления в начало" << std::endl;
     for (size_t i = 0; i < container3.size(); i++) {
-        std::cout << container3[i] << std::endl;
+        std::cout << container3[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 5, 7, 8, 9
 
     // 9. Добавление элемента 20 в середину контейнера
@@ -209,8 +222,9 @@ void single_linked_list_container() {
     // 10. Вывод содержимого контейнера на экран
     std::cout << "10. Содержимое после добавления в середину" << std::endl;
     for (size_t i = 0; i < container3.size(); i++) {
-        std::cout << container3[i] << std::endl;
+        std::cout << container3[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9
 
     // 11. Добавление элемента 30 в конец контейнера
@@ -220,8 +234,9 @@ void single_linked_list_container() {
     // 12. Вывод содержимого контейнера на экран
     std::cout << "12. Финальное содержимое" << std::endl;
     for (size_t i = 0; i < container3.size(); i++) {
-        std::cout << container3[i] << std::endl;
+        std::cout << container3[i] << ' ';
     }
+    std::cout << std::endl;
     // Ожидаемый результат: 10, 0, 1, 3, 20, 5, 7, 8, 9, 30
 
     std::cout << "Размер после выполненных операций: " << container3.size() << std::endl;

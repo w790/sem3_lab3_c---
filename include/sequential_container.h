@@ -9,9 +9,10 @@ template<typename T> //T-шаблонный параметр
 class SequentialContainer {
 
 private:
-    T *data; // память
+    std::unique_ptr<T[]> data; // память
     size_t size_; //размер
     size_t capacity_;//выделенная емкость
+
 
 public:
 
@@ -33,16 +34,15 @@ public:
     SequentialContainer(): data(nullptr),size_(0),capacity_(0) {}//конструктор со списком инициализации
 
     Iterator begin() {
-        return Iterator(data);//возвращает итератор на начало
+        return Iterator(data.get());//возвращает итератор на начало
     }
 
     Iterator end() {
-        return Iterator(data+size_);//возвращает итератор на конец
+        return Iterator(data.get() + size_);;//возвращает итератор на конец
     }
 
     //перемещающий конструктор
-    SequentialContainer(SequentialContainer&& other) noexcept : data(other.data), size_(other.size_), capacity_(other.capacity_) {
-    other.data = nullptr;
+    SequentialContainer(SequentialContainer&& other) noexcept : data(std::move(other.data)), size_(other.size_), capacity_(other.capacity_) {
     other.size_ = 0;
     other.capacity_ = 0;
     }
@@ -50,30 +50,27 @@ public:
     //перемещающий оператор присваивания
     SequentialContainer& operator=(SequentialContainer&& other) noexcept {
         if (this != &other) {
-            delete[] data;
-            data = other.data;
+            data = std::move(other.data);//автоматическое освобождение старой памяти
             size_ = other.size_;
             capacity_ = other.capacity_;
-            other.data = nullptr;
             other.size_ = 0;
             other.capacity_ = 0;
         }
         return *this;
     }
 
-    ~SequentialContainer(){ // деструктор - освобождаем память
-        delete[] data;
-    }
+    //~SequentialContainer(){ // деструктор - освобождаем память(можно при использовании умных указателей не писать)
+    //    delete[] data;
+    //}
 
     //резервирование памяти
     void reserve(size_t new_capacity){
         if (new_capacity <= capacity_) return;
-        T* new_data = new T[new_capacity];// создаем новый массив
+        auto new_data = std::make_unique<T[]>(new_capacity);//создание нового массива
         for(size_t i = 0; i < size_; i++){
-            new_data[i] = data[i]; //копируем значения в новый массив
+            new_data[i] = std::move(data[i]); //используем перемещение для эффективности
         }
-        delete[] data;
-        data = new_data;
+        data = std::move(new_data);//заменяем старый массив новым (автоматическое освобождение)
         capacity_ = new_capacity;
     }
 
@@ -129,7 +126,7 @@ public:
         }
         // сдвигаем элементы вправо
         for (size_t i = size_; i > index; --i) {
-            data[i] = data[i - 1];
+            data[i] = std::move(data[i - 1]);
         }
 
         data[index] = value;

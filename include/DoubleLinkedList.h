@@ -4,13 +4,14 @@
 #include <cstddef>
 #include <stdexcept>
 #include <utility> //для std::move
+#include <memory>
 
 template<typename T>
 class DoublyLinkedList {
 private:
     struct Node{
         T data;
-        Node* next;
+        std::unique_ptr<Node> next;
         Node* prev;
 
         Node(const T& value) : data(value),next(nullptr),prev(nullptr){}
@@ -18,16 +19,16 @@ private:
         Node(T&& value) : data(std::move(value)),next(nullptr),prev(nullptr){}
     };
 
-    Node* head_;
+    std::unique_ptr<Node> head_;
     Node* tail_;
     size_t size_;
 
     Node* get_node(size_t index) {
     	if (index >= size_) throw std::out_of_range("index out of range");
 
-    	Node* current = head_;
+    	Node* current = head_.get();
     	for (size_t i = 0; i < index; i++) {
-    		current = current->next;
+    		current = current->next.get();
 		}
 		return current;
 	}
@@ -50,7 +51,7 @@ public:
     };
 
     Iterator begin() {
-        return Iterator(head_);//возвращает итератор на начало
+        return Iterator(head_.get());//возвращает итератор на начало
     }
 
     Iterator end() {
@@ -60,8 +61,7 @@ public:
     //конструктор
     DoublyLinkedList() : head_(nullptr), tail_(nullptr), size_(0) {}
     //перемещающийся конструктор
-    DoublyLinkedList(DoublyLinkedList&& other) noexcept : head_(other.head_),tail_(other.tail_), size_(other.size_){
-        other.head_ = nullptr;
+    DoublyLinkedList(DoublyLinkedList&& other) noexcept : head_(std::move(other.head_)),tail_(other.tail_), size_(other.size_){
         other.tail_ = nullptr;
         other.size_ = 0;
     }
@@ -72,11 +72,10 @@ public:
             clear();//освобождаем старые данные
 
             //крадем ресурсы у other
-            head_ = other.head_;
+            head_ = std::move(other.head_);
             tail_ = other.tail_;
             size_ = other.size_;
 
-            other.head_ = nullptr;
             other.tail_ = nullptr;
             other.size_ = 0;
         }
@@ -89,64 +88,67 @@ public:
     }
 
     void clear(){
-        Node* current = head_;
-        while (current != nullptr){
-            Node* next = current->next;
-            delete current;
-            current = next;
-        }
-        head_ = tail_ =nullptr;
+        head_.reset();  //автоматически удаляет всю цепочку!
+        tail_ = nullptr;
         size_ = 0;
     }
 
     void push_back(const T& value){
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
+        Node* new_raw = new_node.get();
 
         if (tail_ == nullptr){
-             head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else {
-            tail_->next = new_node;
-            new_node->prev = tail_;
-            tail_ = new_node;
+            new_raw->prev = tail_;
+            tail_->next = std::move(new_node);
+            tail_ = new_raw;
         }
         size_++;
     }
     //для r-value
     void push_back(T&& value){
-        Node* new_node = new Node(std::move(value));
+        auto new_node = std::make_unique<Node>(std::move(value));
+        Node* new_raw = new_node.get();
 
         if (tail_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else {
-            tail_->next = new_node;
-            new_node->prev = tail_;
-            tail_ = new_node;
+            new_raw->prev = tail_;
+            tail_->next = std::move(new_node);
+            tail_ = new_raw;
         }
         size_++;
     }
 
     void push_front(const T& value){
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
+        Node* new_raw = new_node.get();
 
         if (head_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else{
-            new_node->next = head_;
-            head_->prev = new_node;
-            head_ = new_node;
+            new_raw->next = std::move(head_);
+            new_raw->next->prev = new_raw;
+            head_ = std::move(new_node);
         }
         size_++;
     }
     //для r-value
     void push_front(T&& value){
-        Node* new_node = new Node(std::move(value));
+        auto new_node = std::make_unique<Node>(std::move(value));
+        Node* new_raw = new_node.get();
 
         if (head_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else{
-            new_node->next = head_;
-            head_->prev = new_node;
-            head_ = new_node;
+            new_raw->next = std::move(head_);
+            new_raw->next->prev = new_raw;
+            head_ = std::move(new_node);
         }
         size_++;
     }
@@ -165,12 +167,14 @@ public:
             return;
         }
         Node* current = get_node(index);
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
+        Node* new_raw = new_node.get();
 
-        new_node->prev = current->prev;
-        new_node->next = current;
-        current->prev->next = new_node;
-        current->prev = new_node;
+        new_raw->prev = current->prev;
+        new_raw->next = std::move(current->prev->next);
+
+        current->prev = new_raw;
+        new_raw->prev->next = std::move(new_node);
 
         size_++;
     }
@@ -189,35 +193,43 @@ public:
             return;
         }
         Node* current = get_node(index);
-        Node* new_node = new Node(std::move(value));
+        auto new_node = std::make_unique<Node>(std::move(value));
+        Node* new_raw = new_node.get();
 
-        new_node->prev = current->prev;
-        new_node->next = current;
-        current->prev->next = new_node;
-        current->prev = new_node;
+        new_raw->prev = current->prev;
+        new_raw->next = std::move(current->prev->next);
+
+        current->prev = new_raw;
+        new_raw->prev->next = std::move(new_node);
 
         size_++;
     }
 
-    void erase(size_t index){
-        if (index > size_){
-    	    throw std::out_of_range("index out of range");
-	    }
-	    Node* to_delete = get_node(index);
-	    if (to_delete->prev){
-		    to_delete->prev->next = to_delete->next;
-	    } else {
-		    head_ = to_delete->next;
-	    }
+    void erase(size_t index) {
+        if (index >= size_) {
+            throw std::out_of_range("index out of range");
+        }
 
-	    if (to_delete->next){
-		    to_delete->next->prev = to_delete->prev;
-	    } else {
-		    tail_ = to_delete->prev;
-	    }
-
-	    delete to_delete;
-	    size_--;
+        if (index == 0) {
+            // Удаляем первый элемент
+            if (size_ == 1) {
+                head_.reset();
+                tail_ = nullptr;
+            } else {
+                head_ = std::move(head_->next);
+                head_->prev = nullptr;
+            }
+        } else if (index == size_ - 1) {
+            // Удаляем последний элемент
+            tail_ = tail_->prev;
+            tail_->next.reset();
+        } else {
+            // Удаляем из середины
+            Node* to_delete = get_node(index);
+            to_delete->prev->next = std::move(to_delete->next);
+            to_delete->next->prev = to_delete->prev;
+        }
+        size_--;
     }
 
     T& at(size_t index){

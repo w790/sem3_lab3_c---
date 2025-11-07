@@ -3,24 +3,26 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <utility>
+#include <memory>
 
 template<typename T>
 class SinglyLinkedList{
 private:
     struct Node{
         T data;
-        Node*next;
+        std::unique_ptr<Node> next;
         Node(const T& value): data(value),next(nullptr){}
         //конструктор перемещения для Node
         Node(T&& value) : data(std::move(value)),next(nullptr){}
     };
-    Node* head_;
+    std::unique_ptr<Node> head_;
     Node* tail_;
     size_t size_;
 
     Node* get_node(size_t index) const{
         if (index>=size_) throw std::out_of_range{"index out of range"};
-        Node* current = head_;
+        Node* current = head_.get();
         for (size_t i =0;i<index;i++){
             current = current->next;
         }
@@ -45,7 +47,7 @@ public:
     };
 
     Iterator begin() {
-        return Iterator(head_);//возвращает итератор на начало
+        return Iterator(head_.get());//возвращает итератор на начало
     }
 
     Iterator end() {
@@ -55,8 +57,7 @@ public:
     SinglyLinkedList():head_(nullptr),tail_(nullptr),size_(0){}
 
     //перемещающий конструктор
-    SinglyLinkedList(SinglyLinkedList&& other) noexcept : head_(other.head_),tail_(other.tail_), size_(other.size_){
-        other.head_ = nullptr;
+    SinglyLinkedList(SinglyLinkedList&& other) noexcept : head_(std::move(other.head_)),tail_(other.tail_), size_(other.size_){
         other.tail_ = nullptr;
         other.size_ = 0;
     }
@@ -65,79 +66,81 @@ public:
     //перемещащий оператор присваивания
     SinglyLinkedList& operator=(SinglyLinkedList&& other) noexcept {
         if (this != &other) {
-            clear();//освобождаем старые данные
+            // Автоматическое освобождение старой памяти через reset()
+            head_.reset();
 
             //крадем ресурсы у other
-            head_ = other.head_;
+            head_ = std::move(other.head_);
             tail_ = other.tail_;
             size_ = other.size_;
 
-            other.head_ = nullptr;
             other.tail_ = nullptr;
             other.size_ = 0;
         }
         return *this;
     }
-
-    ~SinglyLinkedList(){
-        clear();
-    }
+    //теперь его можно не писать умные указатели сами работают с
+    //~SinglyLinkedList(){
+    //    clear();
+    //}
 
     void clear(){
-        Node* current = head_;
-        while (current != nullptr){
-            Node* next = current->next;
-            delete current;
-            current = next;
-        }
-        head_ = tail_= nullptr;
+        head_.reset(); //автоматически удаляет всю цепочку узлов
+        tail_= nullptr;
         size_ = 0;
     }
 
     void push_back(const T& value){
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
+        Node* new_raw = new_node.get();
 
-        if (tail_ == nullptr){
-            head_ = tail_ = new_node;
+        if (!tail_){
+            // Список пустой
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else {
-            tail_->next = new_node;
-            tail_ = new_node;
+            tail_->next = std::move(new_node);
+            tail_ = new_raw;
         }
         size_++;
     }
 
     void push_back(T&& value){
-        Node* new_node = new Node(std::move(value));
+        auto new_node = std::make_unique<Node>(std::move(value));
+        Node* new_raw = new_node.get();
 
         if (tail_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = new_raw;
         } else {
-            tail_->next = new_node;
-            tail_ = new_node;
+            tail_->next = std::move(new_node);
+            tail_ = new_raw;
         }
         size_++;
     }
 
     void push_front(const T& value){
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
 
         if (head_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = head_.get();
         } else{
-            new_node->next = head_;
-            head_ = new_node;
+            new_node->next = std::move(head_);
+            head_ = std::move(new_node);
         }
         size_++;
     }
 
     void push_front(T&& value){
-        Node* new_node = new Node(std::move(value));
+        auto new_node = std::make_unique<Node>(std::move(value));
 
         if (head_ == nullptr){
-            head_ = tail_ = new_node;
+            head_ = std::move(new_node);
+            tail_ = head_.get();
         } else{
-            new_node->next = head_;
-            head_ = new_node;
+            new_node->next = std::move(head_);
+            head_ = std::move(new_node);
         }
         size_++;
     }
@@ -157,10 +160,10 @@ public:
         }
         // Находим узел ПЕРЕД тем, куда вставляем
         Node* current = get_node(index-1);
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(value);
 
-        new_node->next = current->next;
-        current->next = new_node;
+        new_node->next = std::move(current->next);
+        current->next = std::move(new_node);
 
         size_++;
     }
@@ -180,10 +183,10 @@ public:
         }
         // Находим узел ПЕРЕД тем, куда вставляем
         Node* current = get_node(index-1);
-        Node* new_node = new Node(value);
+        auto new_node = std::make_unique<Node>(std::move(value));
 
-        new_node->next = current->next;
-        current->next = new_node;
+        new_node->next = std::move(current->next);
+        current->next = std::move(new_node);
 
         size_++;
     }
@@ -193,24 +196,21 @@ public:
         if (index >= size_){
             throw std::out_of_range("index out of range");
         }
+
         if (index == 0) {
-            Node* to_delete = head_;
-            head_ = head_->next;
-            if (head_ == nullptr){
+            // Удаляем первый элемент
+            head_ = std::move(head_->next);
+            if (!head_) {
                 tail_ = nullptr;
             }
-            delete to_delete;
         } else {
-            Node* current = get_node(index-1);
-            Node* to_delete = current->next;
+            Node* prev = get_node(index - 1);
+            auto& to_delete = prev->next;
 
-            current->next = to_delete->next;
-
-            if (to_delete == tail_){
-                tail_ = current;
+            if (to_delete.get() == tail_) {
+                tail_ = prev;  // Сначала обновляем tail если нужно
             }
-
-            delete to_delete;
+            to_delete = std::move(to_delete->next);  // Затем переключаем указатели
         }
         size_--;
     }
